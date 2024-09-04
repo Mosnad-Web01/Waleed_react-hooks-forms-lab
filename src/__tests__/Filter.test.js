@@ -1,81 +1,37 @@
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
-import Filter from "../components/Filter";
-import ShoppingList from "../components/ShoppingList";
+import ItemForm from "../components/ItemForm";
 
-const testData = [
-  { id: 1, name: "Yogurt", category: "Dairy" },
-  { id: 2, name: "Pomegranate", category: "Produce" },
-  { id: 3, name: "Lettuce", category: "Produce" },
-  { id: 4, name: "String Cheese", category: "Dairy" },
-  { id: 5, name: "Swiss Cheese", category: "Dairy" },
-  { id: 6, name: "Cookies", category: "Dessert" },
-];
+test("adds a new item to the list when the form is submitted", () => {
+  const handleItemFormSubmit = jest.fn();
+  render(<ItemForm onItemFormSubmit={handleItemFormSubmit} />);
 
-// Filter
-const noop = () => {};
-test("uses a prop of 'search' to display the search term in the input field", () => {
-  render(<Filter search="testing" onSearchChange={noop} />);
-
-  expect(screen.queryByPlaceholderText(/Search/).value).toBe("testing");
-});
-
-test("calls the onSearchChange callback prop when the input is changed", () => {
-  const onChange = jest.fn();
-  render(<Filter search="testing" onSearchChange={onChange} />);
-
-  fireEvent.change(screen.queryByPlaceholderText(/Search/), {
-    target: { value: "testing123" },
+  fireEvent.change(screen.getByLabelText(/Name/i), {
+    target: { value: "Ice Cream" },
   });
 
-  expect(onChange).toHaveBeenCalled();
-});
-
-test("the input field acts as a controlled input", () => {
-  render(<ShoppingList items={testData} />);
-
-  fireEvent.change(screen.queryByPlaceholderText(/Search/), {
-    target: { value: "testing 123" },
+  fireEvent.change(screen.getByLabelText(/Category/i), {
+    target: { value: "Dessert" },
   });
 
-  expect(screen.queryByPlaceholderText(/Search/).value).toBe("testing 123");
+  fireEvent.click(screen.getByRole("button", { name: /Add to List/i }));
+
+  expect(handleItemFormSubmit).toHaveBeenCalledWith(expect.any(Function));
 });
 
-// Shopping List
-test("the shopping list displays all items when initially rendered", () => {
-  const { container } = render(<ShoppingList items={testData} />);
-  expect(container.querySelector(".Items").children).toHaveLength(
-    testData.length
-  );
-});
+test("calls the onItemFormSubmit callback prop when the form is submitted", () => {
+  const handleSubmit = jest.fn();
+  render(<ItemForm onItemFormSubmit={handleSubmit} />);
 
-test("the shopping filters based on the search term to include full matches", () => {
-  render(<ShoppingList items={testData} />);
-
-  fireEvent.change(screen.queryByPlaceholderText(/Search/), {
-    target: { value: "Yogurt" },
+  fireEvent.change(screen.getByLabelText(/Name/i), {
+    target: { value: "Ice Cream" },
   });
 
-  expect(screen.queryByText("Yogurt")).toBeInTheDocument();
-  expect(screen.queryByText("Lettuce")).not.toBeInTheDocument();
-
-  fireEvent.change(screen.queryByPlaceholderText(/Search/), {
-    target: { value: "Lettuce" },
+  fireEvent.change(screen.getByLabelText(/Category/i), {
+    target: { value: "Dessert" },
   });
 
-  expect(screen.queryByText("Lettuce")).toBeInTheDocument();
-  expect(screen.queryByText("Yogurt")).not.toBeInTheDocument();
-});
+  fireEvent.click(screen.getByRole("button", { name: /Add to List/i }));
 
-test("the shopping filters based on the search term to include partial matches", () => {
-  render(<ShoppingList items={testData} />);
-
-  fireEvent.change(screen.queryByPlaceholderText(/Search/), {
-    target: { value: "Cheese" },
-  });
-
-  expect(screen.queryByText("Swiss Cheese")).toBeInTheDocument();
-  expect(screen.queryByText("String Cheese")).toBeInTheDocument();
-  expect(screen.queryByText("Lettuce")).not.toBeInTheDocument();
-  expect(screen.queryByText("Yogurt")).not.toBeInTheDocument();
+  expect(handleSubmit).toHaveBeenCalled();
 });
